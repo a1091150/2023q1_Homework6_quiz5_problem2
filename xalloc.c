@@ -1,9 +1,9 @@
 #include "xalloc.h"
 #include <errno.h>
 #include <stdio.h>
-#include <unistd.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 #include "heap.h"
 #include "rbtree.h"
 
@@ -96,17 +96,6 @@ static void double_free(void *ptr)
     abort();
 }
 
-static metadata_t *fusion(metadata_t *first, metadata_t *second)
-{
-    first->size += second->size;
-    first->next = second->next;
-    if (first->next)
-        first->next->prev = first;
-    else
-        g_info.last_node = first;
-    return first;
-}
-
 static inline metadata_t *try_fusion(metadata_t *node)
 {
     while (IS_FREE(node->prev)) {
@@ -122,25 +111,7 @@ static inline metadata_t *try_fusion(metadata_t *node)
     return node;
 }
 
-static inline void change_break(metadata_t *node)
-{
-    size_t pages_to_remove;
 
-    if (node->prev) {
-        node->prev->next = NULL;
-        g_info.last_node = node->prev;
-        g_info.end_in_page = (void *) g_info.last_node + g_info.last_node->size;
-    } else {
-        g_info.end_in_page = g_info.last_node;
-        g_info.last_node = NULL;
-    }
-    g_info.page_remaining += node->size;
-    pages_to_remove = g_info.page_remaining / g_info.page_size;
-    /* FIXME: sbrk is deprecated */
-    brk((sbrk(0) - (pages_to_remove * g_info.page_size)));
-    g_info.page_remaining =
-        g_info.page_remaining - (pages_to_remove * g_info.page_size);
-}
 
 void free(void *ptr)
 {

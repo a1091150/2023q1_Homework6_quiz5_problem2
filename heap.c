@@ -7,6 +7,36 @@ static void *end_in_page = NULL;
 static metadata_t *last_node = NULL;
 static int page_size = 0;
 
+metadata_t *fusion(metadata_t *first, metadata_t *second)
+{
+    first->size += second->size;
+    first->next = second->next;
+    if (first->next)
+        first->next->prev = first;
+    else
+        last_node = first;
+    return first;
+}
+
+void change_break(metadata_t *node)
+{
+    size_t pages_to_remove;
+
+    if (node->prev) {
+        node->prev->next = NULL;
+        last_node = node->prev;
+        end_in_page = (void *) last_node + last_node->size;
+    } else {
+        end_in_page = last_node;
+        last_node = NULL;
+    }
+    page_remaining += node->size;
+    pages_to_remove = page_remaining / page_size;
+    /* FIXME: sbrk is deprecated */
+    brk((sbrk(0) - (pages_to_remove * page_size)));
+    page_remaining = page_remaining - (pages_to_remove * page_size);
+}
+
 static size_t get_new_page(size_t size)
 {
     size_t pages = ((size / page_size) + 1) * page_size;

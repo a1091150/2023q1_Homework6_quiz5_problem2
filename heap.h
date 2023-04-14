@@ -28,4 +28,6 @@ typedef struct metadata {
 
 
 void *get_heap(size_t size);
+void change_break(metadata_t *node);
+metadata_t *fusion(metadata_t *first, metadata_t *second);
 #endif

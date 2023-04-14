@@ -81,3 +81,9 @@ void *get_heap(size_t size)
     page_remaining -= size;
     return get_in_page(size);
 }
+
+int is_invalid_pointer(void *ptr)
+{
+    metadata_t *node = GET_NODE(ptr);
+    return ptr < first_block || ptr > end_in_page || !IS_VALID(node);
+}

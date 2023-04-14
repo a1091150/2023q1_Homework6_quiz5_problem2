@@ -29,5 +29,6 @@ typedef struct metadata {
 
 void *get_heap(size_t size);
 void change_break(metadata_t *node);
+int is_valid_pointer(void  *ptr);
 metadata_t *fusion(metadata_t *first, metadata_t *second);
 #endif

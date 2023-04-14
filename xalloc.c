@@ -9,12 +9,7 @@
 
 static malloc_t g_info = {
     .root_rbtree = NULL,
-    .last_node = NULL,
-    .end_in_page = NULL,
-    .first_block = NULL,
-    .page_size = 0,
-    .mutex = PTHREAD_MUTEX_INITIALIZER,
-    .page_remaining = 0,
+    .mutex = PTHREAD_MUTEX_INITIALIZER
 };
 
 static inline rbnode_t *find_best(rbnode_t *node, size_t size)
@@ -72,8 +67,6 @@ void *malloc(size_t size)
     if (size < SIZE_DEFAULT_BLOCK)
         size = SIZE_DEFAULT_BLOCK;
     size = ALIGN_BYTES(size) + META_SIZE;
-    if (!g_info.page_size)
-        g_info.page_size = getpagesize();
     if ((tmp = search_freed_block(g_info.root_rbtree, size)))
         ptr = split_block(tmp, size);
     else
@@ -120,7 +113,7 @@ void free(void *ptr)
 
     pthread_mutex_lock(&g_info.mutex);
     metadata_t *node = GET_NODE(ptr);
-    if (ptr < g_info.first_block || ptr > g_info.end_in_page || !IS_VALID(node))
+    if (is_invalid_pointer(ptr))
         invalid_pointer(ptr);
     if (node->free == YFREE)
         double_free(ptr);
